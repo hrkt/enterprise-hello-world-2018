@@ -1,0 +1,54 @@
+version: '3'
+
+networks:
+  extnet:
+
+services:
+
+  # see: https://github.com/Fmstrat/samba-domain
+  samba:
+    image: nowsci/samba-domain
+    container_name: samba
+    volumes:
+      #- /etc/localtime:/etc/localtime:ro
+      - ${CONF_DIR}/samba/data/:/var/lib/samba
+      - ${CONF_DIR}/samba/config/samba:/etc/samba/external
+    environment:
+      - DOMAIN=EHW2018.LOCAL
+      - DOMAINPASS=${AD_DOMAIN_PASSWORD}
+      - JOIN=false
+      - INSECURELDAP:true
+      #- DNSFORWARDER=${EXT_DNS_ADDR}
+    networks:
+      - extnet
+    ports:
+      - ${ADS_ADDR}:53:53
+      - ${ADS_ADDR}:53:53/udp
+      - ${ADS_ADDR}:88:88
+      - ${ADS_ADDR}:88:88/udp
+      - ${ADS_ADDR}:135:135
+      - ${ADS_ADDR}:137-138:137-138/udp
+      - ${ADS_ADDR}:139:139
+      - ${ADS_ADDR}:389:389
+      - ${ADS_ADDR}:389:389/udp
+      - ${ADS_ADDR}:445:445
+      - ${ADS_ADDR}:464:464
+      - ${ADS_ADDR}:464:464/udp
+      - ${ADS_ADDR}:636:636
+      - ${ADS_ADDR}:1024-1044:1024-1044
+      - ${ADS_ADDR}:3268-3269:3268-3269
+    dns_search:
+      - ehw2018.local
+    dns:
+      - ${ADS_ADDR}
+      #- ${EXT_DNS_ADDR}
+    extra_hosts:
+      - localdc.ehw2018.local:${ADS_ADDR}
+    hostname: localdc
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    privileged: true
+    restart: always
+
