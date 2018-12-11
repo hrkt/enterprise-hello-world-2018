@@ -1,7 +1,8 @@
-version: '3'
+version: '3.7'
 
 networks:
   extnet:
+    name: my-external-net
 
 services:
 
@@ -52,3 +53,34 @@ services:
     privileged: true
     restart: always
 
+  gitlab:
+    image: 'gitlab/gitlab-ce:latest'
+    restart: always
+    hostname: 'gitlab.ehw2018.local'
+    #environment:
+      #GITLAB_OMNIBUS_CONFIG: |
+      #  external_url 'https://gitlab.example.com'
+        # Add any other gitlab.rb configuration here, each on its own line
+    networks:
+      - extnet
+    ports:
+      - "${GITLAB_ADDR}:80:80"
+      - "${GITLAB_ADDR}:443:443"
+      - "${GITLAB_ADDR}:10022:22"
+    volumes:
+      - '${CONF_DIR}/gitlab/config:/etc/gitlab'
+      - '${CONF_DIR}/gitlab/logs:/var/log/gitlab'
+      - '${CONF_DIR}/gitlab/data:/var/opt/gitlab'
+    links:
+      - samba
+
+  jenkins:
+    image: 'jenkins/jenkins:lts'
+    networks:
+      - extnet
+    ports:
+      - "${JENKINS_ADDR}:8080:8080"
+    volumes:
+      - '${CONF_DIR}/jenkins/data:/var/jenkins_home'
+    links:
+      - samba
