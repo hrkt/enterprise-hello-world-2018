@@ -99,3 +99,19 @@ services:
     links:
       - samba
       - gitlab
+
+  rancher:
+    image: 'rancher/rancher'
+    restart: unless-stopped
+    networks:
+      - extnet
+    ports:
+      - "${RANCHER_ADDR}:8080:80"
+      - "${RANCHER_ADDR}:8443:443"
+      - "${HOST1_ADDR}:38443:443"
+    volumes:
+      - '${CONF_DIR}/rancher/mysql:/var/lib/mysql'
+    links:
+      - samba
+      - gitlab
+      - jenkins
