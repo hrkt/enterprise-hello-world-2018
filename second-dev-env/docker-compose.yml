@@ -84,3 +84,18 @@ services:
       - '${CONF_DIR}/jenkins/data:/var/jenkins_home'
     links:
       - samba
+
+  che:
+    image: 'eclipse/che'
+    command: "start"
+    environment:
+      - CHE_HOST=${CHE_ADDR}
+      - CHE_PORT=28080
+    networks:
+      - extnet
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - '${CONF_DIR}/che/data:/data'
+    links:
+      - samba
+      - gitlab
