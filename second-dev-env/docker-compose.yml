@@ -75,6 +75,7 @@ services:
       - '${CONF_DIR}/gitlab/data:/var/opt/gitlab'
     links:
       - samba
+      - registry
 
   gitlab-runner:
     image: gitlab/gitlab-runner:latest
@@ -88,19 +89,22 @@ services:
       - '/var/run/docker.sock:/var/run/docker.sock'
     depends_on:
       - gitlab
-
-
-  jenkins:
-    image: 'jenkins/jenkins:lts'
-    networks:
-      - extnet
-    ports:
-      - "${JENKINS_ADDR}:8080:8080"
-    volumes:
-      - '${CONF_DIR}/jenkins/data:/var/jenkins_home'
     links:
-      - samba
+      - registry 
 
+
+#  jenkins:
+#    image: 'jenkins/jenkins:lts'
+#    networks:
+#      - extnet
+#    ports:
+#      - "${JENKINS_ADDR}:8080:8080"
+#    volumes:
+#      - '${CONF_DIR}/jenkins/data:/var/jenkins_home'
+#    links:
+#      - samba
+#      - registry 
+##
         #  che:
         #    image: 'eclipse/che'
         #    command: "start"
@@ -117,7 +121,7 @@ services:
         #      - gitlab
         #
   rancher:
-    image: 'rancher/rancher'
+    image: 'rancher/rancher:v2.1.5'
     restart: unless-stopped
     networks:
       - extnet
@@ -130,7 +134,12 @@ services:
     links:
       - samba
       - gitlab
-      - jenkins
+#      - jenkins
+      - registry 
+    extra_hosts:
+      - "localdc.ehw2018.local:192.168.3.222"
+    environment:
+      - CATTLE_AGENT_IP=${HOST1_ADDR}
 
         #  cadvisor:
         #    image: google/cadvisor:latest
@@ -192,3 +201,19 @@ services:
         #    links:
         #      - samba
         #    command: python /usr/src/app/nginx-ldap-auth-daemon.py --host 0.0.0.0 --port 8888 --url ldap://samba.my-external-net --starttls true -b 'DC=ehw2018,DC=local' -D 'CN=Administrator,CN=Users,DC=ehw2018,DC=local' -w 'P@ssw0rd' 
+
+  registry:
+    image: registry:2.6
+    container_name: registry
+    environment:
+      REGISTRY_HTTP_ADDR: 0.0.0.0:443
+      REGISTRY_HTTP_TLS_CERTIFICATE: /certs/domain.crt
+      REGISTRY_HTTP_TLS_KEY: /certs/domain.key
+    volumes:
+      - ${CONF_DIR}/registry/var/private-registry:/var/lib/registry
+      - ${CONF_DIR}/registry/certs:/certs
+    ports:
+      - "${PRIVATE_REGISTRY_ADDR}:5443:443"
+    restart: always
+    networks:
+      - extnet
